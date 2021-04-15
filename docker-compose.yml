@@ -1,0 +1,52 @@
+version: "3.7"
+
+services:
+  nycsc-pg-db:
+    container_name: nycsc-pg-db
+    build: ./db
+    ports:
+      - "5433:5432" # Expose Ports - HOST:CONTAINER
+    environment:
+      # List of supported environment variables found here:
+      # https://hub.docker.com/_/postgres
+      - POSTGRES_DB=${NYCSC_PG_DB}
+      - POSTGRES_USER=${NYCSC_PG_DB_USER}
+      - POSTGRES_PASSWORD=${NYCSC_PG_DB_PASSWORD}
+    volumes:
+      - ./data:/data
+    healthcheck:
+      # An exit code of 0 will be sent after the container is successfully up and running.
+      test: exit 0
+  # Go to localhost:5050 in a browser, and connect to the server with host "nycsc-pg-db" and port 5432.
+  nycsc-pg-admin:
+    image: dpage/pgadmin4
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${NYCSC_PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${NYCSC_PGADMIN_PASSWORD}
+    depends_on:
+      - nycsc-pg-db
+    links:
+      - nycsc-pg-db
+    tty: true
+  nycsc-api:
+    container_name: nycsc-api
+    build: ./api
+    # Volumes mount a directory inside a container so that modifications to code are possible without having to rebuild the image.
+    volumes:
+      - "./api:/usr/src/app"
+      - "./api/package.json:/usr/src/package.json"
+    ports:
+      - "${NYCSC_API_PORT}:${NYCSC_API_PORT}"
+    environment:
+      # postgres://<user>:<password>@nycsc-pg-db:5432/<pg_db_name>
+      - DATABASE_URL=postgres://${NYCSC_PG_DB_USER}:${NYCSC_PG_DB_PASSWORD}@nycsc-pg-db:5432/${NYCSC_PG_DB}
+      - CLIENT_APP_URL=${NYCSC_API_CLIENT_APP_URL}
+      - PORT=${NYCSC_API_PORT}
+    # `depends_on` specifies the order in which services are started. `nycsc-api` must wait for `nycsc-pg-db` to fire up successfully before it starts.
+    depends_on:
+      - nycsc-pg-db
+    # Link to services running in other containers. The API code will be able to access the database via `nycsc-pg-db:5432`
+    links:
+      - nycsc-pg-db
