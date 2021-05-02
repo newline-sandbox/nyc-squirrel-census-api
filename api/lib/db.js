@@ -1,4 +1,8 @@
-const { Pool } = require("pg");
+const { Pool, types } = require("pg");
+const { DEV_MODE } = process.env;
+
+// Return "NUMERIC" types as floating-point numbers.
+types.setTypeParser(1700, (val) => parseFloat(val));
 
 class Database {
   constructor() {
@@ -6,10 +10,9 @@ class Database {
   }
 
   connect() {
-    console.log(process.env.DATABASE_URL);
-
     this.pool = new Pool({
       connectionString: process.env.DATABASE_URL,
+      ssl: DEV_MODE ? false : { rejectUnauthorized: false }, // Only enable TLS/SSL connections for Heroku.
     });
 
     // The pool with emit an error on behalf of any idle clients it contains if a backend error or network partition happens.

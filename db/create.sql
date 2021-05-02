@@ -1,9 +1,11 @@
 BEGIN;
 
+CREATE EXTENSION postgis;
+
 CREATE TYPE fur_color AS ENUM ('Gray', 'Cinnamon', 'Black', 'White');
 CREATE TYPE am_pm AS ENUM ('AM', 'PM');
 CREATE TYPE adult_juvenile AS ENUM ('Adult', 'Juvenile', '?');
-CREATE TYPE loc_rel_to_ground AS ENUM ('Ground Plane', 'Above Ground'); 
+CREATE TYPE loc_rel_to_ground AS ENUM ('Ground Plane', 'Above Ground');
 
 CREATE TABLE cp_squirrels (
   x NUMERIC(16, 13), -- Longitude coordinate for squirrel sighting point.
@@ -11,7 +13,7 @@ CREATE TABLE cp_squirrels (
   id VARCHAR(15), -- Identification tag for each squirrel sightings. The tag is comprised of "Hectare ID" + "Shift" + "Date" + "Hectare Squirrel Number."
   hectare CHAR(3), -- ID tag, which is derived from the hectare grid used to divide and count the park area. One axis that runs predominantly north-to-south is numerical (01-42), and the axis that runs predominantly east-to-west is roman characters (A-I).
   shift am_pm, -- Value is either "AM" or "PM," to communicate whether or not the sighting session occurred in the morning or late afternoon.
-  obs_date CHAR(8), -- Concatenation of the sighting session day and month.
+  obs_date DATE, -- Concatenation of the sighting session day and month.
   hectare_num SMALLINT, -- Number within the chronological sequence of squirrel sightings for a discrete sighting session.
   age adult_juvenile, -- Value is either "Adult" or "Juvenile."
   primary_fur_color fur_color, -- Value is either "Gray," "Cinnamon" or "Black."
@@ -36,9 +38,9 @@ CREATE TABLE cp_squirrels (
   indifferent BOOLEAN, -- Squirrel was indifferent to human presence.
   runs_from BOOLEAN, -- Squirrel was seen running from humans, seeing them as a threat.
   other_interactions VARCHAR(255), -- Sighter notes on other types of interactions between squirrels and humans.
-  lat_lng VARCHAR(50) -- Latitude and longitude.
+  lat_lng POINT -- Latitude and longitude.
 );
 
-\copy cp_squirrels from '/data/2018_Central_Park_Squirrels.csv' with CSV DELIMITER ',' QUOTE '"' null '';
+\copy cp_squirrels from program 'gawk -f /data/transform.awk /data/2018_Central_Park_Squirrels.csv' with CSV DELIMITER ',' QUOTE '"' null '';
 
 commit;

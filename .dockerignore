@@ -1,0 +1,3 @@
+.git/
+api/node_modules/
+docker-compose*.yml

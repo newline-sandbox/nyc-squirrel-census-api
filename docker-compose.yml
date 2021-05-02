@@ -44,6 +44,7 @@ services:
       - DATABASE_URL=postgres://${NYCSC_PG_DB_USER}:${NYCSC_PG_DB_PASSWORD}@nycsc-pg-db:5432/${NYCSC_PG_DB}
       - CLIENT_APP_URL=${NYCSC_API_CLIENT_APP_URL}
       - PORT=${NYCSC_API_PORT}
+      - DEV_MODE=${NYCSC_API_DEV_MODE}
     # `depends_on` specifies the order in which services are started. `nycsc-api` must wait for `nycsc-pg-db` to fire up successfully before it starts.
     depends_on:
       - nycsc-pg-db
